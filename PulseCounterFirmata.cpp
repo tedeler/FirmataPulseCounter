@@ -34,9 +34,6 @@ boolean PulseCounterFirmata::handleSysex(byte command, byte argc, byte* argv)
         if (pulseCntNum > MAXPULSECOUNTER)
             return true;
 
-//        char *p = debugBuffer + strlen(debugBuffer);
-//        sprintf(p, "this->counter[%d].init(%d, %d, %d, %d)",pulseCntNum, pin, minPauseBefore_us, minPulseLength_us, maxPulseLength_us);
-
         this->counter[pulseCntNum].done();
         Firmata.setPinMode(pin, PIN_MODE_PULSECOUNTER);
         this->counter[pulseCntNum].init(pin, polarity, minPauseBefore_us, minPulseLength_us, maxPulseLength_us);
