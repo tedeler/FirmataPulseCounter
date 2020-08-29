@@ -20,10 +20,11 @@ PulseCounter::PulseCounter()
     this->active = false;
 }
 
-void PulseCounter::init(int pin, uint32_t minPauseBefore_us, uint32_t minPulseLength_us, uint32_t maxPulseLength_us) 
+void PulseCounter::init(byte pin, byte polarity, uint32_t minPauseBefore_us, uint32_t minPulseLength_us, uint32_t maxPulseLength_us) 
 {
     pinMode(pin, INPUT);
     this->pin = pin;
+    this->polarity = polarity;
     this->minPauseBefore_us = minPauseBefore_us;
     this->minPulseLength_us = minPulseLength_us;
     this->maxPulseLength_us = maxPulseLength_us;
@@ -48,8 +49,8 @@ void PulseCounter::done() {
 }
 
 void PulseCounter::pinChangedInterrupt() {
-    auto value_s0in1 = digitalRead(this->pin);
-    int pulsestate = (value_s0in1==0);
+    auto value = digitalRead(this->pin);
+    int pulsestate = (value==polarity);
 
     if(pulsestate && !this->pulsestate){
         pulsestart = micros();
@@ -97,9 +98,9 @@ void PulseCounter::getPulseInfo(uint32_t *pulseLength, uint32_t *pauseLength) {
 void PulseCounter::count() {
     if (pauseLength < minPauseBefore_us)
         cnt_shortPause++;
-    if (pulseLength <= minPulseLength_us)
+    else if (pulseLength < minPulseLength_us)
         cnt_shortPulse++;
-    else if (pulseLength >= maxPulseLength_us)
+    else if (pulseLength > maxPulseLength_us)
         cnt_longPulse++;
     else
         cnt_pulse++;    

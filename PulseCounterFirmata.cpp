@@ -5,6 +5,9 @@
 #include <ConfigurableFirmata.h>
 #include "PulseCounterFirmata.h"
 
+#define DECODE28BIT(p) (((uint32_t) (p)[0]) << 21) + (((uint32_t) (p)[1]) << 14) + (((uint32_t) (p)[2]) << 7) + (p)[3]
+
+
 PulseCounterFirmata::PulseCounterFirmata()
 {
 }
@@ -17,25 +20,26 @@ boolean PulseCounterFirmata::handleSysex(byte command, byte argc, byte* argv)
     byte pulsecounterCommand = argv[0];
     
     if(pulsecounterCommand == PULSECOUNTER_ATTACH) {
-        byte pulseCntNum, pin;
+        byte pulseCntNum, pin, polarity;
         uint32_t minPauseBefore_us, minPulseLength_us, maxPulseLength_us;
 
         pulseCntNum = argv[1];
         pin = argv[2];
-        minPauseBefore_us = (((uint32_t) argv[3]) << 14) + (((uint32_t) argv[4]) << 7) + argv[5];
-        minPulseLength_us = (((uint32_t) argv[6]) << 14) + (((uint32_t) argv[7]) << 7) + argv[8];
-        maxPulseLength_us = (((uint32_t) argv[9]) << 21) + (((uint32_t) argv[10]) << 14) + (((uint32_t) argv[11]) << 7) + argv[12];
+        polarity = argv[3];
 
-        if (pulseCntNum >= MAXPULSECOUNTER)
-            return false;
+        minPauseBefore_us = DECODE28BIT(argv+4);
+        minPulseLength_us = DECODE28BIT(argv+8);
+        maxPulseLength_us = DECODE28BIT(argv+12);
+
+        if (pulseCntNum > MAXPULSECOUNTER)
+            return true;
 
 //        char *p = debugBuffer + strlen(debugBuffer);
 //        sprintf(p, "this->counter[%d].init(%d, %d, %d, %d)",pulseCntNum, pin, minPauseBefore_us, minPulseLength_us, maxPulseLength_us);
 
         this->counter[pulseCntNum].done();
         Firmata.setPinMode(pin, PIN_MODE_PULSECOUNTER);
-        this->counter[pulseCntNum].init(pin, minPauseBefore_us, minPulseLength_us, maxPulseLength_us);
-
+        this->counter[pulseCntNum].init(pin, polarity, minPauseBefore_us, minPulseLength_us, maxPulseLength_us);
     }
 
     if(pulsecounterCommand == PULSECOUNTER_RESET_COUNTER) {
@@ -66,7 +70,6 @@ boolean PulseCounterFirmata::handleSysex(byte command, byte argc, byte* argv)
         this->counter[pulseCntNum].setChangedFlag();
     }
 
-
     return true;
 }
 
@@ -77,24 +80,14 @@ void PulseCounterFirmata::_reportCounter(uint32_t value) {
 
 void PulseCounterFirmata::report(void)
 {
-    if(strlen(debugBuffer) > 0) {
-        Firmata.sendString(debugBuffer);
-        debugBuffer[0] = 0;
-    }
-
     for(int i=0; i < MAXPULSECOUNTER; i++) {
-        if(this->counter == 0)
+        if(!this->counter[i].isActive())
             continue;
         if(!this->counter[i].hasChanged())
             continue;
 
-
         uint32_t cnt_shortPause, cnt_shortPulse, cnt_longPulse, cnt_pulse;
         this->counter[i].getCounterValues(cnt_shortPause, cnt_shortPulse, cnt_longPulse, cnt_pulse);
-
-//        char buf[100];
-//        sprintf(buf, "Reporting %d, %u, %u, %u, %u", i, cnt_shortPause, cnt_shortPulse, cnt_longPulse, cnt_pulse);
-//        Firmata.sendString(buf);
 
         Firmata.write(START_SYSEX);
         Firmata.write(PULSECOUNTER_DATA);
@@ -126,9 +119,8 @@ void PulseCounterFirmata::handleCapability(byte pin)
     if (PinIntCapability == NOT_AN_INTERRUPT || PinIntCapability == EXTERNAL_INT_NMI)
         return;
 
-
     Firmata.write((byte)PIN_MODE_PULSECOUNTER);
-    Firmata.write(28);                            //Resolution
+    Firmata.write(1);                            
 }
 
 void PulseCounterFirmata::reset()

@@ -14,7 +14,7 @@ class PulseCounter {
     static int nextID;
 
     PulseCounter();
-    void init(int pin, uint32_t minPauseBefore_us, uint32_t minPulseLength_us, uint32_t maxPulseLength_us);
+    void init(byte pin, byte polarity, uint32_t minPauseBefore_us, uint32_t minPulseLength_us, uint32_t maxPulseLength_us);
     void done();
     void pinChangedInterrupt();
     void resetCounter();
@@ -33,6 +33,8 @@ class PulseCounter {
     void count();
 
     byte pin;
+    byte polarity;
+    
     bool active;
     int pulsestate;
     int myID;
