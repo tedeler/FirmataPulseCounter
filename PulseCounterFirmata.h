@@ -38,7 +38,7 @@ class PulseCounterFirmata: public FirmataFeature
     void reset();
 
   private:
-    void _reportCounter(uint32_t value);
+    void _report28BitValue(uint32_t value);
     PulseCounter counter[MAXPULSECOUNTER];
     char debugBuffer[200];
 };

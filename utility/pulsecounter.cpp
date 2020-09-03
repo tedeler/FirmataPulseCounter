@@ -91,19 +91,22 @@ void PulseCounter::setCounterValues(uint32_t cnt_shortPause, uint32_t cnt_shortP
 }
 
 void PulseCounter::getPulseInfo(uint32_t *pulseLength, uint32_t *pauseLength) {
-    *pulseLength = this->pulseLength;
-    *pauseLength = this->pauseLength;
+    *pulseLength = this->validPulseLength;
+    *pauseLength = this->validPauseLength;
 }
 
 void PulseCounter::count() {
     if (pauseLength < minPauseBefore_us)
         cnt_shortPause++;
-    else if (pulseLength < minPulseLength_us)
+    if (pulseLength < minPulseLength_us)
         cnt_shortPulse++;
     else if (pulseLength > maxPulseLength_us)
         cnt_longPulse++;
-    else
+    else {
         cnt_pulse++;    
+        validPauseLength = pauseLength;
+        validPulseLength = pulseLength;
+    }
 
     counterChanged = true;
 }

@@ -70,7 +70,7 @@ boolean PulseCounterFirmata::handleSysex(byte command, byte argc, byte* argv)
     return true;
 }
 
-void PulseCounterFirmata::_reportCounter(uint32_t value) {
+void PulseCounterFirmata::_report28BitValue(uint32_t value) {
     for(int i=0; i<4; i++) 
         Firmata.write(  (value >> (i*7)) & 0x7F );
 }
@@ -85,14 +85,18 @@ void PulseCounterFirmata::report(void)
 
         uint32_t cnt_shortPause, cnt_shortPulse, cnt_longPulse, cnt_pulse;
         this->counter[i].getCounterValues(cnt_shortPause, cnt_shortPulse, cnt_longPulse, cnt_pulse);
+        uint32_t pulseLenght, pauseLength;
+        this->counter[i].getPulseInfo(&pulseLenght, &pauseLength);
 
         Firmata.write(START_SYSEX);
         Firmata.write(PULSECOUNTER_DATA);
         Firmata.write((byte) i);
-        _reportCounter(cnt_shortPause);
-        _reportCounter(cnt_shortPulse);
-        _reportCounter(cnt_longPulse);
-        _reportCounter(cnt_pulse);
+        _report28BitValue(cnt_shortPause);
+        _report28BitValue(cnt_shortPulse);
+        _report28BitValue(cnt_longPulse);
+        _report28BitValue(cnt_pulse);
+        _report28BitValue(pulseLenght);
+        _report28BitValue(pauseLength);
         Firmata.write(END_SYSEX);
     }
 }

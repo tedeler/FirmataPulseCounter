@@ -40,6 +40,7 @@ class PulseCounter {
     int myID;
     uint32_t pulsestart, pulseend;
     uint32_t pulseLength, pauseLength, _pauseLength;
+    uint32_t validPulseLength, validPauseLength;
     bool counterChanged;
 
     uint32_t minPauseBefore_us, minPulseLength_us, maxPulseLength_us;
