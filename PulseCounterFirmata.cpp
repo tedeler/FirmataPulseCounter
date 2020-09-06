@@ -77,6 +77,12 @@ void PulseCounterFirmata::_report28BitValue(uint32_t value) {
 
 void PulseCounterFirmata::report(void)
 {
+    static uint32_t lastreporttime = 0;
+    uint32_t now = millis();
+
+    if (now-lastreporttime < 300)
+        return;
+
     for(int i=0; i < MAXPULSECOUNTER; i++) {
         if(!this->counter[i].isActive())
             continue;
@@ -98,6 +104,7 @@ void PulseCounterFirmata::report(void)
         _report28BitValue(pulseLenght);
         _report28BitValue(pauseLength);
         Firmata.write(END_SYSEX);
+        lastreporttime = millis();
     }
 }
 
